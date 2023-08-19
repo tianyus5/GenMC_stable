@@ -465,7 +465,7 @@ void Algo1::run() {
             << Cmag << ", "
             << Xmag << ", "
             << flip_count << ", "
-            << flip_count2 << "\n";
+            << flip_count2 << "\n" << std::flush;
         rs_C.Clear();
         rs_X.Clear();
         if (session.write_contcars == true) {

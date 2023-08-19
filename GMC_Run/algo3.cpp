@@ -771,12 +771,12 @@ void Algo3::run() {
             << Cmag << ", "
             << Xmag << ", "
             << flip_count << ", "
-            << flip_count2 << "\n";
+            << flip_count2 << "\n" << std::flush;
         rs_C.Clear();
         rs_X.Clear();
-        SROout << "\n" << temp << " ";
+        SROout << temp << " ";
         for (float x : count_avg) { SROout << x << " "; }
-        SROout << "\n";
+        SROout << "\n" << std::endl;
         if (session.write_contcars == true) {
             print_state(contcar_name, temp_count);
         }
@@ -784,6 +784,5 @@ void Algo3::run() {
     }
     print_state("CONTCAR_FINAL", temp_count);
     cout << " MC Finished\n";
-    Output.close();
-    SROout.close();
+    
 }
