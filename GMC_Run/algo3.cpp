@@ -776,7 +776,7 @@ void Algo3::run() {
         rs_X.Clear();
         SROout << temp << " ";
         for (float x : count_avg) { SROout << x << " "; }
-        SROout << "\n" << std::endl;
+        SROout << "\n" << std::flush;
         if (session.write_contcars == true) {
             print_state(contcar_name, temp_count);
         }
