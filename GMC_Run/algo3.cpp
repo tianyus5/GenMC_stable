@@ -16,11 +16,10 @@ Algo3::Algo3(void) {}
 Algo3::Algo3(Session& _session, SimCell& _sim_cell) {
     session = _session;
     sim_cell = _sim_cell;
-    passes = session.numb_passes;
-    if (session.numb_passes < 1) {
+    passes = session.ta_passes + session.eq_passes;
+    if (session.ta_passes < 1) {
         cout << "_______________________________________________________________________________" << endl;
-        cout << "Possible Error: Algo3 has been given 0 passes per main pass" << endl;
-        cout << "This implies that no seperate spin flips are made" << endl;
+        cout << "Error: Algo3 has been given 0 thermal average passes" << endl;
         cout << "This is probably not what you want..." << endl;
         cout << "_______________________________________________________________________________" << endl;
     }
@@ -464,6 +463,7 @@ void Algo3::run() {
     bool same_atom;
     double Cmag = 0.0;
     double Xmag = 0.0;
+    int ta_passes = session.ta_passes;
     int eq_passes = session.eq_passes;
     float temp1 = session.start_temp;
     float temp2 = session.end_temp;
@@ -508,7 +508,7 @@ void Algo3::run() {
     Output << "Phase: " << sim_cell.phase_init;
     Output << "Composition: ";
     for (int i = 0; i < sim_cell.species_numbs.size(); i++) { Output << sim_cell.species_numbs[i] << ", "; }
-    Output << "\n";    Output << "MC passes: " << session.numb_passes << ", ";
+    Output << "\n";    Output << "MC passes: " << passes << ", ";
     Output << "Beginning MC EQ run using Algo3\n";
 
     cout << "Making atom list and neighbor index list\n";
@@ -736,7 +736,7 @@ void Algo3::run() {
                         //-----------------------------------------------------------
                     }
                 }
-                if (pass >= passes * 0.5) {
+                if (pass >= eq_passes) {
                     e_avg += init_enrg;
                     rs_C.Push(init_enrg);
                     spin_avg += init_spin;
@@ -751,14 +751,14 @@ void Algo3::run() {
                 Output_converge << init_enrg << " " << init_spin << "\n";
             }
         }
-        double scale = 1.0 / (pow(numb_atoms, 2) * 0.5 * passes);
+        double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
         e_avg *= scale;
         spin_avg *= scale;
         count_avg = scale_vect(count_avg, scale * numb_atoms);
         var_e = rs_C.Variance();
         var_spin = rs_X.Variance();
-        Cmag = var_e / (Kb * double(pow(temp, 2)));
-        Xmag = var_spin / (Kb * double(pow(temp, 2)));
+        Cmag = var_e / (Kb * pow(temp, 2));
+        Xmag = var_spin / (Kb * pow(temp, 2));
         Output << " # "
             << temp << ", "
             << e_avg << ", "

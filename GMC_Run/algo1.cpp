@@ -7,8 +7,7 @@ Algo1::Algo1(Session& _session, SimCell& _sim_cell) {
     sim_cell = _sim_cell;
     if (session.numb_passes < 1) {
         cout << "_______________________________________________________________________________" << endl;
-        cout << "Possible Error: Algo1 has been given 0 passes" << endl;
-        cout << "This implies that no flips are made which is likely not phisical." << endl;
+        cout << "Error: Algo1 has been given 0 thermal average passes" << endl;
         cout << "This is probably not what you want..." << endl;
         cout << "_______________________________________________________________________________" << endl;
     }
@@ -253,7 +252,8 @@ void Algo1::run() {
     bool same_spin;
     double Cmag = 0.0;
     double Xmag = 0.0;
-    int passes = session.numb_passes;
+    int passes = session.ta_passes + session.eq_passes;
+    int ta_passes = session.ta_passes;
     int eq_passes = session.eq_passes;
     float sro_target = session.sro_target;
     float temp1 = session.start_temp;
@@ -296,7 +296,7 @@ void Algo1::run() {
     Output << "Phase: " << sim_cell.phase_init;
     Output << "Composition: ";
     for (int i = 0; i < sim_cell.species_numbs.size(); i++) { Output << sim_cell.species_numbs[i] << ", "; }
-    Output << "\n";    Output << "MC passes: " << session.numb_passes << ", ";
+    Output << "\n";    Output << "MC passes: " << passes << ", ";
     Output << "Beginning MC EQ run using Algo1\n";
     
     cout << "Making atom list and neighbor index list\n";
@@ -435,7 +435,7 @@ void Algo1::run() {
                         break;
                         }
                     }
-                if (pass >= passes * 0.2) {
+                if (pass >= eq_passes) {
                     e_avg += init_enrg;
                     rs_C.Push(init_enrg);
                     spin_avg += init_spin;
@@ -447,7 +447,7 @@ void Algo1::run() {
             }
         }
         cout << "spin avg: " << spin_avg << "\n";
-        double scale = 1.0 / (pow(numb_atoms, 2) * 0.8 * passes);
+        double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
         e_avg *= scale;
         spin_avg *= scale;
         var_e = rs_C.Variance();
