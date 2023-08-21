@@ -14,9 +14,9 @@ Algo1::Algo1(Session& _session, SimCell& _sim_cell) {
     }
 }
 
-float Algo1::eval_site_chem(int site) {
-    float enrg = 0;
-    map<string, float>::iterator rule_itr;
+double Algo1::eval_site_chem(int site) {
+    double enrg = 0;
+    map<string, double>::iterator rule_itr;
     for (int i = 0; i < chem_motif_groups[site].size(); i++) {
         vector<vector<int>> motif = chem_motif_groups[site][i];
         for (int j =0; j < motif.size(); j++) {
@@ -33,9 +33,9 @@ float Algo1::eval_site_chem(int site) {
     return enrg;
 }
 
-float Algo1::eval_site_spin(int site) {
-    float enrg = 0;
-    map<string, float>::iterator rule_itr;
+double Algo1::eval_site_spin(int site) {
+    double enrg = 0;
+    map<string, double>::iterator rule_itr;
     for (int i = 0; i < spin_motif_groups[site].size(); i++) {
         vector<vector<int>> motif = spin_motif_groups[site][i];
         for (int j = 0; j < motif.size(); j++) {
@@ -54,9 +54,9 @@ float Algo1::eval_site_spin(int site) {
     return enrg;
 }
 
-float Algo1::eval_spin_flip(int site, float old_spin) {
-    float enrg = 0;
-    map<string, float>::iterator rule_itr;
+double Algo1::eval_spin_flip(int site, float old_spin) {
+    double enrg = 0;
+    map<string, double>::iterator rule_itr;
     for (int i = 0; i < spin_motif_groups[site].size(); i++) {
         vector<vector<int>> motif = spin_motif_groups[site][i];
         for (int j = 0; j < motif.size(); j++) {
@@ -75,8 +75,8 @@ float Algo1::eval_spin_flip(int site, float old_spin) {
     return (enrg * spin_list[site] - enrg * old_spin);
 }
 
-float Algo1::eval_lat() {
-    float enrg = 0;
+double Algo1::eval_lat() {
+    double enrg = 0;
     for (int site = 0; site < sim_cell.numb_atoms; site++) {
         enrg += eval_site_chem(site);
         enrg += eval_site_spin(site);
@@ -84,8 +84,8 @@ float Algo1::eval_lat() {
     return enrg + session.intercept;
 }
 
-float Algo1::eval_lat_spin() {
-    float enrg = 0;
+double Algo1::eval_lat_spin() {
+    double enrg = 0;
     for (int site = 0; site < sim_cell.numb_atoms; site++) {
         enrg += eval_site_spin(site);
     }
@@ -251,8 +251,8 @@ void Algo1::run() {
     int attempts = 0;
     float rand_spin = 0.0;
     bool same_spin;
-    float Cmag = 0.0;
-    float Xmag = 0.0;
+    double Cmag = 0.0;
+    double Xmag = 0.0;
     int passes = session.numb_passes;
     int eq_passes = session.eq_passes;
     float sro_target = session.sro_target;
@@ -316,12 +316,12 @@ void Algo1::run() {
 //    for (Rule rule : session.chem_rule_list) {
 //        rule_key = to_string(rule.GetType()) + "." + to_string(rule.clust_ind);
 //        for (int i = 0; i < rule.deco.size(); i++) { rule_key += "." + to_string(rule.deco[i]); }
-//        rule_map_chem.insert(pair<string, float>(rule_key, rule.GetEnrgCont()));
+//        rule_map_chem.insert(pair<string, double>(rule_key, rule.GetEnrgCont()));
 //    }
     for (Rule rule : session.spin_rule_list) {
         rule_key = to_string(rule.GetType()) + "." + to_string(rule.clust_ind);
         for (int i = 0; i < rule.deco.size(); i++) { rule_key += "." + to_string(rule.deco[i]); }
-        rule_map_spin.insert(pair<string, float>(rule_key, rule.GetEnrgCont()));
+        rule_map_spin.insert(pair<string, double>(rule_key, rule.GetEnrgCont()));
         for (int atom : rule.deco) {
             if (find(spin_atoms.begin(), spin_atoms.end(), atom) == spin_atoms.end()) { spin_atoms.push_back(atom); } // initialize spin_atoms
         }
@@ -340,20 +340,20 @@ void Algo1::run() {
 //    cout << "Starting Real MC\n";
     
     // Begin MC
-    float init_enrg = eval_lat_spin();
+    double init_enrg = eval_lat_spin();
     cout << "Evaluated spin energy: " << init_enrg / numb_atoms << "\n";
     Output << "initial spin energy\n";
     Output << init_enrg / numb_atoms << "\n";
-//    float init_enrg = eval_lat();
+//    double init_enrg = eval_lat();
 //    cout << "Evaluated total energy: " << init_enrg / numb_atoms << "\n";
-//    float init_spin_enrg = eval_lat_spin();
+//    double init_spin_enrg = eval_lat_spin();
 //    cout << "Evaluated spin energy: " << init_spin_enrg / numb_atoms << "\n";
 //    Output << "initial total energy, spin energy\n";
 //    Output << init_enrg / numb_atoms << ", " << init_spin_enrg / numb_atoms << "\n";
     Output << "temp, enrg, mag, var_e, var_spin, Cmag, Xmag, flip_count, flip_count2 \n";
-    float init_spin = 0.0;
-    float var_spin = 0.0;
-    float var_e = 0.0;
+    double init_spin = 0.0;
+    double var_spin = 0.0;
+    double var_e = 0.0;
     RunningStat rs_C;
     RunningStat rs_X;
     cout << "Counting spins...\n";
@@ -377,13 +377,13 @@ void Algo1::run() {
     cout << "Entering main loop\n";
     int temp_count = 0;
     for (float temp = temp1; (temp2 - temp) * inc_dir >= 0; temp += temp_inc) {
-        float e_avg = 0.0;
-        float spin_avg = 0.0;
+        double e_avg = 0.0;
+        double spin_avg = 0.0;
         int flip_count = 0;
         int flip_count2 = 0;
         for (int pass = 0; pass < passes; pass++) {
             for (int site = 0; site < numb_atoms; site++) {
-                float e_flip = 0.0;
+                double e_flip = 0.0;
                 float spin_flip = 0.0;
                 float old_spin = spin_list[site];
                 float new_spin = 0.0;
@@ -452,8 +452,8 @@ void Algo1::run() {
         spin_avg *= scale;
         var_e = rs_C.Variance();
         var_spin = rs_X.Variance();
-        Cmag = var_e / (Kb * double(pow(temp, 2)));
-        Xmag = var_spin / (Kb * double(pow(temp, 2)));
+        Cmag = var_e / (Kb * pow(temp, 2));
+        Xmag = var_spin / (Kb * pow(temp, 2));
         Output << " # "
             << temp << ", "
             << e_avg << ", "

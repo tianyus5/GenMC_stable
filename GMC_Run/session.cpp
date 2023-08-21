@@ -182,7 +182,7 @@ void Session::fill_rule_list() {
 	vector<string> line;
 	string motif_line;
 	int type = 0;
-	vector<float> enrg;
+	vector<double> enrg;
 	vector<int> phase;
 	vector<vector<vector<float>>> motif;
 	vector<vector<int>> deco;
@@ -201,15 +201,13 @@ void Session::fill_rule_list() {
 		bool intercept_flag = false;
 		for (int i = 0; i < rule_lines.size(); i++) {
 			if (rule_lines[i].find('#') != std::string::npos and intercept_flag == false) {
-				//cout << enrg.size() << "\n";
 				if (phase.size() == 0) { for (int j = 0; j < enrg.size(); j++) { phase.push_back(0); } }
-				//cout << phase.size() << "  " << type.size() << "\n";
 				if (type == 0) { chem_motif_list.push_back(motif); }
 				if (type == 1) { spin_motif_list.push_back(motif); }
 				for (int j = 0; j < motif.size(); j++) {
 					for (int k = 0; k < enrg.size(); k++) {
 						if (type == 0) { chem_rule_list.push_back(Rule(enrg[k], type, phase[k], deco[k], motif[j], chem_clust_ind)); }
-						// in algo1 and algo2 the motif information stored in the Rule is redundant. It is still stored for future undeveloped algorithms
+						// The motif information stored in the Rule is redundant for future algorithms' development
 						if (type == 1) { spin_rule_list.push_back(Rule(enrg[k], type, phase[k], deco[k], motif[j], spin_clust_ind)); }
 					}
 				}

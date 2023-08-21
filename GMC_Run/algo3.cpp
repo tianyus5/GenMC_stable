@@ -31,9 +31,9 @@ Algo3::Algo3(Session& _session, SimCell& _sim_cell) {
     rand_method = std::uniform_int_distribution<int>(0, passes - 1);
 }
 
-float Algo3::eval_site_chem(int site) {
-    float enrg = 0;
-    map<size_t, vector<float>>::iterator rule_itr;
+double Algo3::eval_site_chem(int site) {
+    double enrg = 0;
+    map<size_t, vector<double>>::iterator rule_itr;
     vector<uint32_t> rule_info;
     size_t rule_key;
     for (int i = 0; i < chem_motif_groups[site].size(); i++) {
@@ -57,9 +57,9 @@ float Algo3::eval_site_chem(int site) {
     return enrg;
 }
 
-float Algo3::eval_site_spin(int site) {
-    float enrg = 0;
-    map<size_t, float>::iterator rule_itr;
+double Algo3::eval_site_spin(int site) {
+    double enrg = 0;
+    map<size_t, double>::iterator rule_itr;
     vector<uint32_t> rule_info;
     size_t rule_key;
     for (int i = 0; i < spin_motif_groups[site].size(); i++) {
@@ -82,9 +82,9 @@ float Algo3::eval_site_spin(int site) {
     return enrg;
 }
 
-float Algo3::eval_spin_flip(int site, float old_spin) {
-    float enrg = 0;
-    map<size_t, float>::iterator rule_itr;
+double Algo3::eval_spin_flip(int site, float old_spin) {
+    double enrg = 0;
+    map<size_t, double>::iterator rule_itr;
     vector<uint32_t> rule_info;
     size_t rule_key;
     for (int i = 0; i < spin_motif_groups[site].size(); i++) {
@@ -107,12 +107,12 @@ float Algo3::eval_spin_flip(int site, float old_spin) {
     return (enrg * spin_list[site] - enrg * old_spin);
 }
 
-float Algo3::eval_atom_flip(int site) {
-    map<size_t, vector<float>>::iterator rule_itr_chem;
-    map<size_t, float>::iterator rule_itr_spin;
+double Algo3::eval_atom_flip(int site) {
+    map<size_t, vector<double>>::iterator rule_itr_chem;
+    map<size_t, double>::iterator rule_itr_spin;
     vector<uint32_t> rule_info;
     size_t rule_key;
-    float enrg = 0.0;
+    double enrg = 0.0;
     fill(site_rule_count_list.begin(), site_rule_count_list.end(), 0);
     for (int i = 0; i < chem_motif_groups[site].size(); i++) {
         vector<vector<int>> motif = chem_motif_groups[site][i];
@@ -152,8 +152,8 @@ float Algo3::eval_atom_flip(int site) {
     return enrg;
 }
 
-float Algo3::eval_lat() {
-    float enrg = 0;
+double Algo3::eval_lat() {
+    double enrg = 0;
     for (int site = 0; site < sim_cell.numb_atoms; site++) {
         enrg += eval_site_chem(site);
         enrg += eval_site_spin(site);
@@ -161,8 +161,8 @@ float Algo3::eval_lat() {
     return enrg + session.intercept;
 }
 
-float Algo3::eval_lat_spin() {
-    float enrg = 0;
+double Algo3::eval_lat_spin() {
+    double enrg = 0;
     for (int site = 0; site < sim_cell.numb_atoms; site++) {
         enrg += eval_site_spin(site);
     }
@@ -330,7 +330,7 @@ void Algo3::print_state(string contcar_name, int temp) {
     OUT_file.close();
 }
 
-void Algo3::spin_move(int site, int pass, float temp, float new_spin, ofstream& Output_converge) {
+void Algo3::spin_move(int site, int pass, float temp, float new_spin) {
     // Flip Spin
     float old_spin = spin_list[site];
     float keep_rand;
@@ -350,12 +350,9 @@ void Algo3::spin_move(int site, int pass, float temp, float new_spin, ofstream& 
     // Record the enrg and spin changes
     init_enrg += e_flip;
     init_spin += spin_flip;
-    if (session.do_conv_output) {
-        Output_converge << "method1 " << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
-    }
 }
 
-void Algo3::spec_move(int site, int rand_site, int pass, float temp, ofstream& Output_converge) {
+void Algo3::spec_move(int site, int rand_site, int pass, float temp) {
     int old_site_chem = chem_list[site];
     float old_site_spin = spin_list[site];
     int old_rand_site_chem = chem_list[rand_site];
@@ -365,11 +362,11 @@ void Algo3::spec_move(int site, int rand_site, int pass, float temp, ofstream& O
     vector<float> sro_flip1;
     vector<float> sro_flip2;
     // Flip atom for site
-    float old_enrg = eval_atom_flip(site);
+    double old_enrg = eval_atom_flip(site);
     vector<float> old_sro = site_rule_count_list;
     chem_list[site] = old_rand_site_chem;
     spin_list[site] = old_rand_site_spin;
-    float new_enrg = eval_atom_flip(site);
+    double new_enrg = eval_atom_flip(site);
     vector<float> new_sro = site_rule_count_list;
     e_flip += new_enrg - old_enrg;
     sro_flip1 = vect_subtract(new_sro, old_sro);
@@ -401,12 +398,9 @@ void Algo3::spec_move(int site, int rand_site, int pass, float temp, ofstream& O
     init_enrg += e_flip;
     init_spin += spin_flip;
     init_sro = vect_add(init_sro, sro_flip);
-    if (session.do_conv_output) {
-        Output_converge << "method2 " << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
-    }
 }
 
-void Algo3::atom_move(int site, int rand_site, float new_spin1, float new_spin2, int pass, float temp, ofstream& Output_converge) {
+void Algo3::atom_move(int site, int rand_site, float new_spin1, float new_spin2, int pass, float temp) {
     int old_site_chem = chem_list[site];
     float old_site_spin = spin_list[site];
     int old_rand_site_chem = chem_list[rand_site];
@@ -416,14 +410,14 @@ void Algo3::atom_move(int site, int rand_site, float new_spin1, float new_spin2,
     vector<float> sro_flip1;
     vector<float> sro_flip2;
     // Flip atom for site
-    float old_enrg = eval_atom_flip(site);
+    double old_enrg = eval_atom_flip(site);
     vector<float> old_sro = site_rule_count_list;
     chem_list[site] = old_rand_site_chem;
     // spin_list[site] = old_rand_site_spin;
     // Flip spin for site
     spin_list[site] = new_spin1;
     spin_flip += new_spin1 - old_rand_site_spin;
-    float new_enrg = eval_atom_flip(site);
+    double new_enrg = eval_atom_flip(site);
     vector<float> new_sro = site_rule_count_list;
     e_flip += new_enrg - old_enrg;
     sro_flip1 = vect_subtract(new_sro, old_sro);
@@ -459,9 +453,6 @@ void Algo3::atom_move(int site, int rand_site, float new_spin1, float new_spin2,
     init_enrg += e_flip;
     init_spin += spin_flip;
     init_sro = vect_add(init_sro, sro_flip);
-    if (session.do_conv_output) {
-        Output_converge << "method3 " << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
-    }
 }
 
 void Algo3::run() {
@@ -471,8 +462,8 @@ void Algo3::run() {
     float rand_spin = 0.0;
     bool same_spin;
     bool same_atom;
-    float Cmag = 0.0;
-    float Xmag = 0.0;
+    double Cmag = 0.0;
+    double Xmag = 0.0;
     int eq_passes = session.eq_passes;
     float temp1 = session.start_temp;
     float temp2 = session.end_temp;
@@ -537,7 +528,7 @@ void Algo3::run() {
     float ind = 0;
     size_t rule_key;
     vector<uint32_t> rule_info;
-    map<size_t, vector<float>>::iterator rule_itr;
+    map<size_t, vector<double>>::iterator rule_itr;
     for (Rule rule : session.chem_rule_list) {
         rule_info.push_back(rule.GetType());
         rule_info.push_back(rule.clust_ind);
@@ -545,8 +536,8 @@ void Algo3::run() {
         rule_key = cust_hash(rule_info);
         rule_itr = rule_map_chem.find(rule_key);
         if (rule_itr == rule_map_chem.end()) {
-            vector<float> enrg_ind_pair = { rule.GetEnrgCont(), ind };
-            rule_map_chem.insert(pair<size_t, vector<float>>(rule_key, enrg_ind_pair));
+            vector<double> enrg_ind_pair = { rule.GetEnrgCont(), ind };
+            rule_map_chem.insert(pair<size_t, vector<double>>(rule_key, enrg_ind_pair));
             lat_rule_count_list.push_back(0);
             site_rule_count_list.push_back(0);
             ind += 1;
@@ -558,7 +549,7 @@ void Algo3::run() {
         rule_info.push_back(rule.clust_ind);
         for (int i = 0; i < rule.deco.size(); i++) { rule_info.push_back(rule.deco[i]); }
         rule_key = cust_hash(rule_info);
-        rule_map_spin.insert(pair<size_t, float>(rule_key, rule.GetEnrgCont()));
+        rule_map_spin.insert(pair<size_t, double>(rule_key, rule.GetEnrgCont()));
         for (int atom : rule.deco) {
             if (find(spin_atoms.begin(), spin_atoms.end(), atom) == spin_atoms.end()) { spin_atoms.push_back(atom); } // initialize spin_atoms
         }
@@ -575,7 +566,7 @@ void Algo3::run() {
     init_enrg = eval_lat();
     init_sro = lat_rule_count_list; // record initial SRO/rule count list
     cout << "Evaluated total energy: " << init_enrg / numb_atoms << "\n";
-    float init_spin_enrg = eval_lat_spin();
+    double init_spin_enrg = eval_lat_spin();
     cout << "Evaluated spin energy: " << init_spin_enrg / numb_atoms << "\n";
     Output << "initial total energy, spin energy\n";
     Output << init_enrg / numb_atoms << ", " << init_spin_enrg / numb_atoms << "\n";
@@ -646,7 +637,7 @@ void Algo3::run() {
                             state = METHOD_0;
                             break;
                         }
-                        spin_move(site, pass, temp, new_spin, Output_converge);
+                        spin_move(site, pass, temp, new_spin);
                         state = DONE;
                         break;
                         //-----------------------------------------------------------
@@ -670,7 +661,7 @@ void Algo3::run() {
                             state = METHOD_1;
                             break;
                         }
-                        spec_move(site, rand_site, pass, temp, Output_converge);
+                        spec_move(site, rand_site, pass, temp);
                         state = DONE;
                         break;
                         //-----------------------------------------------------------
@@ -739,7 +730,7 @@ void Algo3::run() {
                                 break;
                             }
                         }
-                        atom_move(site, rand_site, new_spin1, new_spin2, pass, temp, Output_converge);
+                        atom_move(site, rand_site, new_spin1, new_spin2, pass, temp);
                         state = DONE;
                         break;
                         //-----------------------------------------------------------
@@ -752,6 +743,12 @@ void Algo3::run() {
                     rs_X.Push(init_spin);
                     count_avg = vect_add(count_avg, init_sro);
                 }
+            }
+            if (session.do_conv_output) {
+                Output_converge << "method1 " << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
+            }
+            if (session.do_conv_output ) {
+                Output_converge << init_enrg << " " << init_spin << "\n";
             }
         }
         double scale = 1.0 / (pow(numb_atoms, 2) * 0.5 * passes);
