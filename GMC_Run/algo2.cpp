@@ -299,7 +299,6 @@ void Algo2::run() {
     float Cmag = 0.0;
     float Xmag = 0.0;
     int passes = session.numb_passes;
-    int sub_passes = session.numb_subpasses;
     int eq_passes = session.eq_passes;
     float sro_target = session.sro_target;
     float temp1 = session.start_temp;
