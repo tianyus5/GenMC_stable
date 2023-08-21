@@ -27,7 +27,7 @@ public:
 	int tot_atoms;
 	float start_temp = 1;
 	float end_temp = 0;
-	float temp_inc = 0.5;
+	float temp_step = 0.5;
 	float sro_temp = 0;
 	float sro_target;
 	float mag_ext = 0;

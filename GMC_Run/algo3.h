@@ -40,13 +40,13 @@ public:
 	int passes;
 	const double Kb = 0.00008617333262; // Boltzmann constant
 	const double uB = 0.00005788381806; // Bhor magnaton
-    float init_spin = 0.0;
     float spin_flip = 0.0;
+    double spin_avg = 0.0;
+    double var_spin = 0.0;
+    double init_spin = 0.0;
     double init_enrg = 0.0;
     double e_flip = 0.0;
-    double spin_avg = 0.0;
     double e_avg = 0.0;
-    double var_spin = 0.0;
     double var_e = 0.0;
 	RunningStat rs_C;
 	RunningStat rs_X;

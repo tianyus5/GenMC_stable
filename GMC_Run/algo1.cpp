@@ -247,57 +247,38 @@ void Algo1::print_state(string contcar_name, int temp) {
 
 void Algo1::run() {
     // declare variables
+    bool same_spin;
     int attempts = 0;
     float rand_spin = 0.0;
-    bool same_spin;
+    double init_spin = 0.0;
+    double init_enrg = 0.0;
     double Cmag = 0.0;
     double Xmag = 0.0;
-    int passes = session.ta_passes + session.eq_passes;
-    int ta_passes = session.ta_passes;
-    int eq_passes = session.eq_passes;
+    double var_spin = 0.0;
+    double var_e = 0.0;
+    RunningStat rs_C;
+    RunningStat rs_X;
     float sro_target = session.sro_target;
     float temp1 = session.start_temp;
     float temp2 = session.end_temp;
-    float temp_inc = session.temp_inc;
+    float temp_step = session.temp_step;
     float keep_rand;
     float keep_prob;
     vector<vector<float>> spin_states = session.spin_states;
+    int passes = session.ta_passes + session.eq_passes;
+    int ta_passes = session.ta_passes;
+    int eq_passes = session.eq_passes;
     int numb_atoms = sim_cell.numb_atoms;
     int numb_neighbors = sim_cell.atom_list[0].getNumbNeighbors(0, sim_cell);
     vector<vector<int>> neigh_ind_list(numb_atoms, vector<int>(sim_cell.atom_list[0].getNumbNeighbors(0, sim_cell), 0));
     vector<int> spin_atoms; // atomic species that can have spin
 
-    // Create seperate output file to avoid race condition
-    string file_name = "OUTPUT";
-    string contcar_name = "CONTCAR";
-    bool file_exists = true;
-    while (file_exists == true) {
-        const char* c_file = file_name.c_str();
-        int fd = open(c_file, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-        if (fd < 0) {
-            // file exists or otherwise uncreatable
-            outfile_count += 1;
-            file_name = "OUTPUT" + to_string(outfile_count);
-            contcar_name = "CONTCAR" + to_string(outfile_count);
-        }
-        else {
-            file_exists = false;
-            close(fd);
-        }
-    }
-    const char* c_file = file_name.c_str();
-    ofstream Output;
-    Output.open(c_file);
-    
-    // Output energy and spin for convergence test
-    ofstream Output_converge;
-    if ( session.do_conv_output) { Output_converge.open("OUTPUT_CONVERG"); }
-
-    Output << "Phase: " << sim_cell.phase_init;
-    Output << "Composition: ";
-    for (int i = 0; i < sim_cell.species_numbs.size(); i++) { Output << sim_cell.species_numbs[i] << ", "; }
-    Output << "\n";    Output << "MC passes: " << passes << ", ";
-    Output << "Beginning MC EQ run using Algo1\n";
+    // setup rng for random spin choice and acceptance probability
+    std::mt19937_64 rng;
+    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
+    rng.seed(ss);
+    std::uniform_real_distribution<double> unif(0, 1);
     
     cout << "Making atom list and neighbor index list\n";
     // Make atom_list more acessable for species and spin and neighbors
@@ -333,50 +314,63 @@ void Algo1::run() {
     cout << "Making spin motif group lists\n";
     fill_SMG(neigh_ind_list);
     
-//    // initalize system with desired SRO
-//    Output << "EQ passes: " << session.eq_passes << ", EQ Temp: " << session.sro_temp << "\n";
-//    Output << "SRO Target: " << session.sro_target << "\n";
-//    cout << "SRO Target: " << session.sro_target << "\n";
-//    cout << "Starting Real MC\n";
-    
+    // Create seperate output file to avoid race condition
+    string file_name = "OUTPUT";
+    string contcar_name = "CONTCAR";
+    bool file_exists = true;
+    while (file_exists == true) {
+        const char* c_file = file_name.c_str();
+        int fd = open(c_file, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+        if (fd < 0) {
+            // file exists or otherwise uncreatable
+            outfile_count += 1;
+            file_name = "OUTPUT" + to_string(outfile_count);
+            contcar_name = "CONTCAR" + to_string(outfile_count);
+        }
+        else {
+            file_exists = false;
+            close(fd);
+        }
+    }
+    const char* c_file = file_name.c_str();
+    ofstream Output;
+    Output.open(c_file);
+    // Output energy and spin for convergence test
+    ofstream Output_converge;
+    if ( session.do_conv_output) { Output_converge.open("OUTPUT_CONVERG"); }
+
     // Begin MC
-    double init_enrg = eval_lat_spin();
-    cout << "Evaluated spin energy: " << init_enrg / numb_atoms << "\n";
-    Output << "initial spin energy\n";
-    Output << init_enrg / numb_atoms << "\n";
-//    double init_enrg = eval_lat();
-//    cout << "Evaluated total energy: " << init_enrg / numb_atoms << "\n";
-//    double init_spin_enrg = eval_lat_spin();
-//    cout << "Evaluated spin energy: " << init_spin_enrg / numb_atoms << "\n";
-//    Output << "initial total energy, spin energy\n";
-//    Output << init_enrg / numb_atoms << ", " << init_spin_enrg / numb_atoms << "\n";
-    Output << "temp, enrg, mag, var_e, var_spin, Cmag, Xmag, flip_count, flip_count2 \n";
-    double init_spin = 0.0;
-    double var_spin = 0.0;
-    double var_e = 0.0;
-    RunningStat rs_C;
-    RunningStat rs_X;
-    cout << "Counting spins...\n";
+    init_enrg = eval_lat_spin();
+    cout << "Initial spin energy is " << init_enrg / numb_atoms << " per atom\n";
     for (int site = 0; site < numb_atoms; site++) {
         if (find(spin_atoms.begin(), spin_atoms.end(), chem_list[site]) != spin_atoms.end()) {
             init_spin += spin_list[site];
         }
     }
     cout << "Initial spin is " << init_spin / numb_atoms << " per atom\n";
-    float inc_dir = 1;
-    if (signbit(temp2 - temp1) == 1) { inc_dir = -1; }
-
-    // setup rng for random spin choice and acceptance probability
-    std::mt19937_64 rng;
-    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
-    rng.seed(ss);
-    std::uniform_real_distribution<double> unif(0, 1);
+    Output << "Using Algo1 for spin flip";
+    Output << "\nPhase: " << sim_cell.phase_init;
+    Output << "\nComposition: ";
+    for (int i = 0; i < sim_cell.species_numbs.size(); i++) { Output << sim_cell.species_numbs[i] << " "; }
+    Output << "\nMC passes: " << passes;
+    Output << "\nInitial spin energy per atom: ";
+    Output << init_enrg / numb_atoms;
+    Output << "\nInitial spin per atom: ";
+    Output << init_spin / numb_atoms;
+    Output << "\ntemp, enrg, mag, var_e, var_spin, Cmag, Xmag, flip_count, flip_count2" << endl;
+    
+    //    // initalize system with desired SRO
+    //    Output << "EQ passes: " << session.eq_passes << ", EQ Temp: " << session.sro_temp << "\n";
+    //    Output << "SRO Target: " << session.sro_target << "\n";
+    //    cout << "SRO Target: " << session.sro_target << "\n";
+    //    cout << "Starting Real MC\n";
     
     // Start MC loop
     cout << "Entering main loop\n";
-    int temp_count = 0;
-    for (float temp = temp1; (temp2 - temp) * inc_dir >= 0; temp += temp_inc) {
+    int temp_count = 0; // index of temperature
+    float inc_dir = 1; // temp increment direction
+    if (signbit(temp2 - temp1) == 1) { inc_dir = -1; }
+    for (float temp = temp1; (temp2 - temp) * inc_dir >= 0; temp += temp_step * inc_dir) {
         double e_avg = 0.0;
         double spin_avg = 0.0;
         int flip_count = 0;
@@ -443,10 +437,9 @@ void Algo1::run() {
                 }
             }
             if (session.do_conv_output ) {
-                Output_converge << init_enrg << " " << init_spin << "\n";
+                Output_converge << init_enrg << " " << init_spin << endl;
             }
         }
-        cout << "spin avg: " << spin_avg << "\n";
         double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
         e_avg *= scale;
         spin_avg *= scale;
@@ -454,8 +447,7 @@ void Algo1::run() {
         var_spin = rs_X.Variance();
         Cmag = var_e / (Kb * pow(temp, 2));
         Xmag = var_spin / (Kb * pow(temp, 2));
-        Output << " # "
-            << temp << ", "
+        Output << temp << ", "
             << e_avg << ", "
             << spin_avg << ", "
             << var_e << ", "
@@ -463,7 +455,7 @@ void Algo1::run() {
             << Cmag << ", "
             << Xmag << ", "
             << flip_count << ", "
-            << flip_count2 << "\n" << std::flush;
+            << flip_count2 << endl;
         rs_C.Clear();
         rs_X.Clear();
         if (session.write_contcars == true) {

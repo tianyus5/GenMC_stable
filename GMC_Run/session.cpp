@@ -30,7 +30,7 @@ Session::Session(string input_file) {
 		else if (setting[0].compare("TA_PASSES") == 0) { ta_passes = stoi(setting[2]); }
 		else if (setting[0].compare("START_TEMP") == 0) { start_temp = stof(setting[2]); }
 		else if (setting[0].compare("END_TEMP") == 0) { end_temp = stof(setting[2]); }
-		else if (setting[0].compare("TEMP_INC") == 0) { temp_inc = stof(setting[2]); }
+		else if (setting[0].compare("TEMP_STEP") == 0) { temp_step = stof(setting[2]); }
 		else if (setting[0].compare("EQ_PASSES") == 0) { eq_passes = stoi(setting[2]); }
 		else if (setting[0].compare("SRO_TEMP") == 0) { sro_temp = stof(setting[2]); }
 		else if (setting[0].compare("MAG_EXT") == 0) { mag_ext = stof(setting[2]); }
@@ -109,7 +109,7 @@ Session::Session(Session& _session) {
 	eq_passes = _session.eq_passes;
 	start_temp = _session.start_temp;
 	end_temp = _session.end_temp;
-	temp_inc = _session.temp_inc;
+	temp_step = _session.temp_step;
 	sro_temp = _session.sro_temp;
 	sro_target = _session.sro_target;
 	mag_ext = _session.mag_ext;
@@ -134,7 +134,7 @@ void Session::_copy(Session& _session) {
 	eq_passes = _session.eq_passes;
 	start_temp = _session.start_temp;
 	end_temp = _session.end_temp;
-	temp_inc = _session.temp_inc;
+	temp_step = _session.temp_step;
 	sro_temp = _session.sro_temp;
 	sro_target = _session.sro_target;
 	mag_ext = _session.mag_ext;
