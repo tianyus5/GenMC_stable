@@ -94,7 +94,7 @@ float Algo1::eval_lat_spin() {
 
 bool Algo1::bc_check(vector<float> check_vect, vector<float>& pos) {
     bool bc_test = false;
-    vector<int> dir { -1, 1, -2, 2 };
+    vector<int> dir { -1, 1 };
     vector<float> bc_pos { 0, 0, 0 };
     vector<float> lc_shift { 0, 0, 0 };
     vector<vector<float>> bc_shifts { pos };
@@ -224,9 +224,9 @@ void Algo1::print_state(string contcar_name, int temp) {
     sort_vect(temp_spec, perm);
     ofstream OUT_file;
     string file_name = contcar_name + "_" + to_string(temp);
+    if (temp == -1) { file_name = contcar_name; }
     OUT_file.open(file_name);
     if (OUT_file.is_open()) {
-        OUT_file << "Alloy of";
         for (string spec : session.species_str) { OUT_file << " " << spec; }
         OUT_file << "\n 1 \n";
         for (int i = 0; i < 3; i++) {
@@ -390,11 +390,9 @@ void Algo1::run() {
                 int state = 1;
                 while (state != DONE) {
                     switch (state) {
-                        //-----------------------------------------------------------
                     case 0:
                         state = DONE;
                         break;
-                        //-----------------------------------------------------------
                     case 1:
                         if (find(spin_atoms.begin(), spin_atoms.end(), chem_list[site]) == spin_atoms.end()) {
                             state = 0; //NO_SPIN
@@ -435,7 +433,6 @@ void Algo1::run() {
                         init_spin += spin_flip;
                         state = DONE;
                         break;
-                        //-----------------------------------------------------------
                         }
                     }
                 if (pass >= passes * 0.2) {
@@ -449,6 +446,7 @@ void Algo1::run() {
                 Output_converge << init_enrg << " " << init_spin << "\n";
             }
         }
+        cout << "spin avg: " << spin_avg << "\n";
         double scale = 1.0 / (pow(numb_atoms, 2) * 0.8 * passes);
         e_avg *= scale;
         spin_avg *= scale;
@@ -473,6 +471,7 @@ void Algo1::run() {
         }
         temp_count += 1;
     }
-    cout << " MC Finished\n";
+    print_state("CONTCAR_FINAL", -1);
     Output.close();
+    cout << " MC Finished\n";
 }

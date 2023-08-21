@@ -305,9 +305,9 @@ void Algo3::print_state(string contcar_name, int temp) {
     sort_vect(temp_allowed, perm);
     ofstream OUT_file;
     string file_name = contcar_name + "_" + to_string(temp);
+    if (temp == -1) { file_name = contcar_name; }
     OUT_file.open(file_name);
     if (OUT_file.is_open()) {
-        OUT_file << "Alloy of";
         for (string spec : session.species_str) { OUT_file << " " << spec; }
         OUT_file << "\n 1 \n";
         for (int i = 0; i < 3; i++) {
@@ -782,7 +782,7 @@ void Algo3::run() {
         }
         temp_count += 1;
     }
-    print_state("CONTCAR_FINAL", temp_count);
+    print_state("CONTCAR_FINAL", -1);
+    Output.close();
     cout << " MC Finished\n";
-    
 }
