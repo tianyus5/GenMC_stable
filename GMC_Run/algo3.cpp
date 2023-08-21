@@ -744,12 +744,12 @@ void Algo3::run() {
                     count_avg = vect_add(count_avg, init_sro);
                 }
             }
-            if (session.do_conv_output) {
-                Output_converge << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
-            }
-//            if (session.do_conv_output ) {
-//                Output_converge << init_enrg << " " << init_spin << "\n";
+//            if (session.do_conv_output) {
+//                Output_converge << eval_lat() << "; " << init_enrg << ", " << e_flip << "; " << init_spin << ", " << spin_flip << "\n";
 //            }
+            if (session.do_conv_output ) {
+                Output_converge << init_enrg << " " << init_spin << "\n";
+            }
         }
         double scale = 1.0 / (pow(numb_atoms, 2) * 0.5 * passes);
         e_avg *= scale;
