@@ -27,11 +27,11 @@ using namespace std;
 
 class Algo1 {
 public:
+    const double Kb = 0.00008617333262; // Boltzmann constant
+    const double uB = 0.00005788381806; // Bohr magnaton
 	int outfile_count = 0;
 	SimCell sim_cell;
 	Session session;
-	const double Kb = 0.00008617333262; // Boltzmann constant
-	const double uB = 0.00005788381806; // Bohr magnaton
 	vector<int> chem_list;
 	vector<float> spin_list;
 	vector<vector<float>> pos_list;

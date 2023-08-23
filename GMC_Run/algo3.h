@@ -34,12 +34,12 @@ using namespace std;
 
 class Algo3 {
 public:
+    const double Kb = 0.00008617333262; // Boltzmann constant
+    const double uB = 0.00005788381806; // Bhor magnaton
 	int flip_count = 0;
 	int flip_count2 = 0;
 	int outfile_count = 0;
 	int passes;
-	const double Kb = 0.00008617333262; // Boltzmann constant
-	const double uB = 0.00005788381806; // Bhor magnaton
     float spin_flip = 0.0;
     double spin_avg = 0.0;
     double var_spin = 0.0;
@@ -53,12 +53,12 @@ public:
 	SimCell sim_cell;
 	Session session;
 	vector<int> chem_list;
-	vector<float> count_avg;
-	vector<float> init_sro;
     vector<float> sro_flip;
 	vector<float> spin_list;
 	vector<float> site_rule_count_list;
-	vector<float> lat_rule_count_list;
+	vector<double> lat_rule_count_list;
+    vector<double> init_sro;
+    vector<double> count_avg;
 	vector<vector<float>> pos_list;
 	vector<vector<vector<vector<int>>>> spin_motif_groups;
 	vector<vector<vector<vector<int>>>> chem_motif_groups;
@@ -88,7 +88,6 @@ public:
     double eval_site_chem(int site);
     double eval_spin_flip(int site, float old_spin);
     double eval_atom_flip(int site);
-	vector<int> eval_site_sro(int site);
 };
 
 #endif

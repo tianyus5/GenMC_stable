@@ -755,7 +755,7 @@ void Algo3::run() {
         double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
         e_avg *= scale;
         spin_avg *= scale;
-        count_avg = scale_vect(count_avg, scale * numb_atoms);
+        for (int i = 0; i < count_avg.size(); i++) { count_avg[i] *= scale * numb_atoms; }
         var_e = rs_C.Variance();
         var_spin = rs_X.Variance();
         Cmag = var_e / (Kb * pow(temp, 2));
