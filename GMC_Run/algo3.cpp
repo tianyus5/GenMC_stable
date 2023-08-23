@@ -461,8 +461,6 @@ void Algo3::run() {
     int attempts = 0;
     int rand_site = 1;
     float rand_spin = 0.0;
-    double Cmag = 0.0;
-    double Xmag = 0.0;
     float temp1 = session.start_temp;
     float temp2 = session.end_temp;
     float temp_step = session.temp_step;
@@ -578,7 +576,7 @@ void Algo3::run() {
     Output << init_spin_enrg / numb_atoms;
     Output << "\nInitial spin per atom: ";
     Output << init_spin / numb_atoms;
-    Output << "\ntemp, enrg, mag, var_e, var_spin, Cmag, Xmag, flip_count, flip_count2:" << endl;
+    Output << "\ntemp, enrg, mag, var_e, var_spin, Cp, Xmag, flip_count, flip_count2:" << endl;
 
     // Start MC loop
     cout << "Entering main loop\n";
@@ -586,8 +584,6 @@ void Algo3::run() {
     float inc_dir = 1; //temp increment direction
     if (signbit(temp2 - temp1) == 1) { inc_dir = -1; }
     for (float temp = temp1; (temp2 - temp) * inc_dir >= 0; temp += temp_step * inc_dir) {
-        e_avg = 0.0;
-        spin_avg = 0.0;
         flip_count = 0;
         flip_count2 = 0;
         count_avg = lat_rule_count_list;
@@ -599,7 +595,6 @@ void Algo3::run() {
                 float new_spin = 0.0;
                 float new_spin1 = 0.0;
                 float new_spin2 = 0.0;
-                //float old_spin;
                 int state = 0;
                 int method_index = rand_method(rng);
                 if (method_index < passes * 0.33) state = METHOD_1;
@@ -621,7 +616,6 @@ void Algo3::run() {
                             state = ONE_SPIN;
                             break;
                         }// state set to 0
-                        //old_spin = spin_list[site];
                         same_spin = true;
                         attempts = 0;
                         while (same_spin == true and attempts < 20) {
@@ -738,10 +732,8 @@ void Algo3::run() {
                     }
                 }
                 if (pass >= eq_passes) {
-                    e_avg += init_enrg;
-                    rs_C.Push(init_enrg);
-                    spin_avg += init_spin;
-                    rs_X.Push(init_spin);
+                    rs_E.Push(init_enrg);
+                    rs_M.Push(init_spin);
                     count_avg = vect_add(count_avg, init_sro);
                 }
             }
@@ -752,25 +744,25 @@ void Algo3::run() {
                 Output_converge << init_enrg << " " << init_spin << endl;
             }
         }
-        double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
-        e_avg *= scale;
-        spin_avg *= scale;
-        for (int i = 0; i < count_avg.size(); i++) { count_avg[i] *= scale * numb_atoms; }
-        var_e = rs_C.Variance();
-        var_spin = rs_X.Variance();
-        Cmag = var_e / (Kb * pow(temp, 2));
-        Xmag = var_spin / (Kb * pow(temp, 2));
+        double scale = 1.0 / (numb_atoms * ta_passes);
+        double e_avg = rs_E.Mean() / numb_atoms;
+        double spin_avg = rs_M.Mean() / numb_atoms;
+        for (int i = 0; i < count_avg.size(); i++) { count_avg[i] *= scale; }
+        double var_e = rs_E.Variance();
+        double var_spin = rs_M.Variance();
+        double Cp = var_e / (Kb * pow(temp, 2));
+        double Xmag = var_spin / (Kb * pow(temp, 2));
         Output << temp << ", "
             << e_avg << ", "
             << spin_avg << ", "
             << var_e << ", "
             << var_spin << ", "
-            << Cmag << ", "
+            << Cp << ", "
             << Xmag << ", "
             << flip_count << ", "
             << flip_count2 << endl;
-        rs_C.Clear();
-        rs_X.Clear();
+        rs_E.Clear();
+        rs_M.Clear();
         SROout << temp << " ";
         for (float x : count_avg) { SROout << x << " "; }
         SROout << endl;

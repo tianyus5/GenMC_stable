@@ -247,17 +247,13 @@ void Algo1::print_state(string contcar_name, int temp) {
 
 void Algo1::run() {
     // declare variables
+    RunningStat rs_E;
+    RunningStat rs_M;
+    double init_spin = 0.0;
+    double init_enrg = 0.0;
     bool same_spin;
     int attempts = 0;
     float rand_spin = 0.0;
-    double init_spin = 0.0;
-    double init_enrg = 0.0;
-    double Cmag = 0.0;
-    double Xmag = 0.0;
-    double var_spin = 0.0;
-    double var_e = 0.0;
-    RunningStat rs_C;
-    RunningStat rs_X;
     float sro_target = session.sro_target;
     float temp1 = session.start_temp;
     float temp2 = session.end_temp;
@@ -371,8 +367,6 @@ void Algo1::run() {
     float inc_dir = 1; // temp increment direction
     if (signbit(temp2 - temp1) == 1) { inc_dir = -1; }
     for (float temp = temp1; (temp2 - temp) * inc_dir >= 0; temp += temp_step * inc_dir) {
-        double e_avg = 0.0;
-        double spin_avg = 0.0;
         int flip_count = 0;
         int flip_count2 = 0;
         for (int pass = 0; pass < passes; pass++) {
@@ -430,23 +424,20 @@ void Algo1::run() {
                         }
                     }
                 if (pass >= eq_passes) {
-                    e_avg += init_enrg;
-                    rs_C.Push(init_enrg);
-                    spin_avg += init_spin;
-                    rs_X.Push(init_spin);
+                    rs_E.Push(init_enrg);
+                    rs_M.Push(init_spin);
                 }
             }
             if (session.do_conv_output ) {
                 Output_converge << init_enrg << " " << init_spin << endl;
             }
         }
-        double scale = 1.0 / (pow(numb_atoms, 2) * ta_passes);
-        e_avg *= scale;
-        spin_avg *= scale;
-        var_e = rs_C.Variance();
-        var_spin = rs_X.Variance();
-        Cmag = var_e / (Kb * pow(temp, 2));
-        Xmag = var_spin / (Kb * pow(temp, 2));
+        double e_avg = rs_E.Mean() / numb_atoms;
+        double spin_avg = rs_M.Mean() / numb_atoms;
+        double var_e = rs_E.Variance();
+        double var_spin = rs_M.Variance();
+        double Cmag = var_e / (Kb * pow(temp, 2));
+        double Xmag = var_spin / (Kb * pow(temp, 2));
         Output << temp << ", "
             << e_avg << ", "
             << spin_avg << ", "
@@ -456,8 +447,8 @@ void Algo1::run() {
             << Xmag << ", "
             << flip_count << ", "
             << flip_count2 << endl;
-        rs_C.Clear();
-        rs_X.Clear();
+        rs_E.Clear();
+        rs_M.Clear();
         if (session.write_contcars == true) {
             print_state(contcar_name, temp_count);
         }

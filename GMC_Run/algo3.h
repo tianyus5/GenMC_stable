@@ -41,15 +41,11 @@ public:
 	int outfile_count = 0;
 	int passes;
     float spin_flip = 0.0;
-    double spin_avg = 0.0;
-    double var_spin = 0.0;
     double init_spin = 0.0;
-    double init_enrg = 0.0;
     double e_flip = 0.0;
-    double e_avg = 0.0;
-    double var_e = 0.0;
-	RunningStat rs_C;
-	RunningStat rs_X;
+    double init_enrg = 0.0;
+	RunningStat rs_E;
+	RunningStat rs_M;
 	SimCell sim_cell;
 	Session session;
 	vector<int> chem_list;
