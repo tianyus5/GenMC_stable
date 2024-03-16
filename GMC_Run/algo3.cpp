@@ -1,16 +1,5 @@
 #include "algo3.h"
 
-size_t cust_hash(vector<uint32_t>& vect) {
-    std::size_t seed = vect.size();
-    for (auto x : vect) {
-        x = ((x >> 16) ^ x) * 0x45d9f3b;
-        x = ((x >> 16) ^ x) * 0x45d9f3b;
-        x = (x >> 16) ^ x;
-        seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-    return seed;
-}
-
 Algo3::Algo3(void) {}
 
 Algo3::Algo3(Session& _session, SimCell& _sim_cell) {
@@ -28,6 +17,17 @@ Algo3::Algo3(Session& _session, SimCell& _sim_cell) {
     unif = std::uniform_real_distribution<double>(0.0, 1.0);
     rand_atom = std::uniform_int_distribution<int>(0, sim_cell.numb_atoms - 1);
     rand_method = std::uniform_int_distribution<int>(0, passes - 1);
+}
+
+size_t Algo3::cust_hash(vector<uint32_t>& vect) {
+    std::size_t seed = vect.size();
+    for (auto x : vect) {
+        x = ((x >> 16) ^ x) * 0x45d9f3b;
+        x = ((x >> 16) ^ x) * 0x45d9f3b;
+        x = (x >> 16) ^ x;
+        seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    return seed;
 }
 
 double Algo3::eval_site_chem(int site) {
@@ -157,7 +157,7 @@ double Algo3::eval_lat() {
         enrg += eval_site_chem(site);
         enrg += eval_site_spin(site);
     }
-    return enrg + session.intercept;
+    return enrg + session.intercept * sim_cell.numb_atoms;
 }
 
 double Algo3::eval_lat_spin() {
@@ -588,6 +588,10 @@ void Algo3::run() {
         flip_count2 = 0;
         count_avg = lat_rule_count_list;
         fill(count_avg.begin(), count_avg.end(), 0.0);
+//        int num_method0 = 0;
+//        int num_method1 = 0;
+//        int num_method2 = 0;
+//        int num_method3 = 0;
         for (int pass = 0; pass < passes; pass++) {
             for (int site = 0; site < numb_atoms; site++) {
                 e_flip = 0.0;
@@ -605,6 +609,7 @@ void Algo3::run() {
                         //-----------------------------------------------------------
                     case 0:
                         state = DONE;
+//                        num_method0 += 1;
                         break;
                         //-----------------------------------------------------------       
                     case METHOD_1:
@@ -634,6 +639,7 @@ void Algo3::run() {
                         }
                         spin_move(site, pass, temp, new_spin);
                         state = DONE;
+//                        num_method1 += 1;
                         break;
                         //-----------------------------------------------------------
                     case METHOD_2:
@@ -658,6 +664,7 @@ void Algo3::run() {
                         }
                         spec_move(site, rand_site, pass, temp);
                         state = DONE;
+//                        num_method2 += 1;
                         break;
                         //-----------------------------------------------------------
                     case METHOD_3:
@@ -699,7 +706,7 @@ void Algo3::run() {
                                 attempts += 1;
                             }
                             if (attempts >= 20) {
-                                state = METHOD_0;
+                                state = METHOD_2;
                                 break;
                             }
                         }
@@ -721,12 +728,13 @@ void Algo3::run() {
                                 attempts += 1;
                             }
                             if (attempts >= 20) {
-                                state = METHOD_0;
+                                state = METHOD_2;
                                 break;
                             }
                         }
                         atom_move(site, rand_site, new_spin1, new_spin2, pass, temp);
                         state = DONE;
+//                        num_method3 += 1;
                         break;
                         //-----------------------------------------------------------
                     }
@@ -744,6 +752,7 @@ void Algo3::run() {
                 Output_converge << init_enrg << " " << init_spin << endl;
             }
         }
+//        cout << num_method0 << ", " << num_method1 << ", " << num_method2 << ", " << num_method3 << endl;
         double scale = 1.0 / (numb_atoms * ta_passes);
         double e_avg = rs_E.Mean() / numb_atoms;
         double spin_avg = rs_M.Mean() / numb_atoms;
