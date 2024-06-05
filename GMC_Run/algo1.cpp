@@ -18,11 +18,11 @@ double Algo1::eval_site_chem(int site) {
     map<string, double>::iterator rule_itr;
     for (int i = 0; i < chem_motif_groups[site].size(); i++) {
         vector<vector<int>> motif = chem_motif_groups[site][i];
-        for (int j =0; j < motif.size(); j++) {
+        for (int j = 0; j < motif.size(); j++) {
             string rule_key = "0."; // chem ind
             rule_key += to_string(i); // clust_ind
             vector<int> group = motif[j];
-            for ( int k : group ) {
+            for (int k : group) {
                 rule_key += "." + to_string(chem_list[k]); // sites ind
             }
             rule_itr = rule_map_chem.find(rule_key);
@@ -80,7 +80,7 @@ double Algo1::eval_lat() {
         enrg += eval_site_chem(site);
         enrg += eval_site_spin(site);
     }
-    return enrg + session.intercept;
+    return enrg + session.intercept * sim_cell.numb_atoms;
 }
 
 double Algo1::eval_lat_spin() {
