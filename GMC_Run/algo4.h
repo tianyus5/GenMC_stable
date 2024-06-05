@@ -1,6 +1,6 @@
 #pragma once
-#ifndef algo2_h
-#define algo2_h
+#ifndef algo4_h
+#define algo4_h
 
 #include <chrono>
 #include <vector>
@@ -32,7 +32,7 @@ using namespace std;
 #define METHOD_3 3
 #define DONE -1
 
-class Algo2 {
+class Algo4 {
 public:
     const double Kb = 0.00008617333262; // Boltzmann constant
     const double uB = 0.00005788381806; // Bhor magnaton
@@ -69,8 +69,8 @@ public:
     std::uniform_int_distribution<int> rand_atom;
     std::uniform_int_distribution<int> rand_method;
 
-    Algo2(void);
-    Algo2(Session& _session, SimCell& _sim_cell);
+    Algo4(void);
+    Algo4(Session& _session, SimCell& _sim_cell);
     size_t cust_hash(vector<uint32_t>& vect);
     void run();
     void fill_CMG(vector<vector<int>>& neigh_ind_list);
