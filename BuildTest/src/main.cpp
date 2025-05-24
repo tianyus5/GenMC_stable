@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <cmath>
 #include "run_sim.h"
 #include "session.h"
 #include "utils.h"
